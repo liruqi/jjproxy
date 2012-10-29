@@ -450,7 +450,17 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 break
 
 def start():
-    print "Loaded", len(gConfig["HOST"]), " dns rules."
+    try:
+        response = DNS.Request().req(name="jjproxy-http.liruqi.info", qtype="A", protocol="udp", port=gConfig["DNS_PORT"], server=gConfig["REMOTE_DNS"])
+        for a in response.answers:
+            if a['typename'] == 'A':
+                ip = a["data"]
+                gConfig["HTTP_PROXY"] = ip
+                print ("HTTP_PROXY: " + ip)
+
+    except:
+        print "HTTP_PROXY resolve failed, use default: ", gConfig["HTTP_PROXY"]
+
     print "Set your browser's HTTP/HTTPS proxy to 127.0.0.1:%d"%(gOptions.port)
     print "You can configure your proxy var http://127.0.0.1:%d"%(gOptions.port)
     if gConfig['CONFIG_ON_STARTUP']:
@@ -468,7 +478,7 @@ if __name__ == "__main__":
     try :
         if sys.version[:3] in ('2.7', '3.0', '3.1', '3.2', '3.3'):
             import argparse
-            parser = argparse.ArgumentParser(description='west chamber proxy')
+            parser = argparse.ArgumentParser(description='jjproxy')
             parser.add_argument('--port', default=gConfig["LOCAL_PORT"], type=int,
                    help='local port')
             parser.add_argument('--log', default=2, type=int, help='log level, 0-5')
