@@ -11,7 +11,7 @@ gConfig = {
     "AUTORANGE_WAITSIZE": 524288,
     "AUTORANGE_MAXSIZE": 1048576,
     "BLOCKED_DOMAINS_URI" : "https://raw.github.com/liruqi/west-chamber-season-3/master/west-chamber-proxy/status/timedout.txt",
-    "REMOTE_DNS" : "168.95.1.1",
+    "REMOTE_DNS_LIST" : ["8.8.8.8", "202.181.202.140", "202.181.224.2","168.95.192.1","168.95.1.1","202.216.228.18"],
     "DNS_PROTOCOL": "udp",
     "DNS_PORT": 53,
     "DNS_CACHE_MAXSZ" : 1024,
