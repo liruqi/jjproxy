@@ -393,7 +393,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
             if exc_type == socket.timeout or (exc_type == socket.error and code in ["60", "110", "10060"]): #timed out, 10060 is for Windows
                 if not inWhileList:
                     logging.info ("add "+host+" to blocked domains")
-                    gConfig["BLOCKED_DOMAINS"][host] = True
+                    gConfig["BLOCKED_IPS"][connectHost] = True
     
     def do_GET(self):
         #some sites(e,g, weibo.com) are using comet (persistent HTTP connection) to implement server push
@@ -413,12 +413,16 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
         self.remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         logging.info ("SSL: connect " + host + " ip:" + ip)
-        self.remote.connect((ip, int(port)))
+        try:
+            self.remote.connect((ip, int(port)))
 
-        Agent = 'WCProxy/1.0'
-        self.wfile.write('HTTP/1.1'+' 200 Connection established\n'+
+            Agent = 'WCProxy/1.0'
+            self.wfile.write('HTTP/1.1'+' 200 Connection established\n'+
                          'Proxy-agent: %s\n\n'%Agent)
-        self._read_write()
+            self._read_write()
+        except:
+            logging.info ("SSL: connect " + ip + " failed.")
+            gConfig["BLOCKED_IPS"][ip] = True
         return
 
     def end_error(self, code, message=None, data=None):
@@ -490,16 +494,16 @@ if __name__ == "__main__":
             parser.add_argument('--port', default=gConfig["LOCAL_PORT"], type=int,
                    help='local port')
             parser.add_argument('--log', default=2, type=int, help='log level, 0-5')
-            parser.add_argument('--pidfile', default='wcproxy.pid', help='pid file')
-            parser.add_argument('--logfile', default='wcproxy.log', help='log file')
+            parser.add_argument('--pidfile', default='jjproxy.pid', help='pid file')
+            parser.add_argument('--logfile', default='jjproxy.log', help='log file')
             gOptions = parser.parse_args()
         else:
             import optparse
             parser = optparse.OptionParser()
             parser.add_option("-p", "--port", action="store", type="int", dest="port", default=gConfig["LOCAL_PORT"], help="local port")
             parser.add_option("-l", "--log", action="store", type="int", dest="log", default=2, help="log level, 0-5")
-            parser.add_option("-f", "--pidfile", dest="pidfile", default="wcproxy.pid", help="pid file")
-            parser.add_option("-o", "--logfile", dest="logfile", default="wcproxy.log", help="log file")
+            parser.add_option("-f", "--pidfile", dest="pidfile", default="jjproxy.pid", help="pid file")
+            parser.add_option("-o", "--logfile", dest="logfile", default="jjproxy.log", help="log file")
             (gOptions, args)=parser.parse_args()
 
     except :
