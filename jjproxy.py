@@ -380,6 +380,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
                     return
                 if code in ["54"]: #reset
                     logging.info(host + ": reset")
+                    gConfig["BLOCKED_IPS"][connectHost] = True
                     return
                 if code in ["61"]: #server not support injection
                     if doInject:
