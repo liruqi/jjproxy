@@ -378,8 +378,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 logging.info (host + ": detected remote disconnect: " + code)
                 if code in ["32", "10053"]: #errno.EPIPE, 10053 is for Windows
                     return
-                if code in ["54"]: #reset
-                    logging.info(host + ": reset")
+                if code in ["54", "10054"]: #reset
+                    logging.info(host + ": reset from " + connectHost)
                     gConfig["BLOCKED_IPS"][connectHost] = True
                     return
                 if code in ["61"]: #server not support injection
@@ -413,7 +413,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
             ip = gConfig['HTTP_PROXY']
 
         self.remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        logging.info ("SSL: connect " + host + " ip:" + ip)
+        logging.info ("SSL: connect " + host + " " + ip + ":" +port)
         try:
             self.remote.connect((ip, int(port)))
 
