@@ -303,17 +303,20 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self.remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             logging.debug( host + ":connect to " + connectHost + ":" + str(port))
             self.remote.connect((connectHost, port))
-            if doInject: 
-                logging.info ("inject http for "+host)
-                self.remote.send("\r\n\r\n")
+            
 
             # Send requestline
             if path == "":
                 path = "/"
             print " ".join((self.command, path, self.request_version)) + "\r\n"
             self.remote.send(" ".join((self.command, path, self.request_version)) + "\r\n")
-                
-            self.remote.send(str(self.headers) + "\r\n")
+            
+            if doInject: 
+                logging.info ("inject http for "+host)
+                del self.headers["Host"]
+                self.remote.send(str(self.headers) + "Host: " + host + "\r\n\r\n")
+            else:
+                self.remote.send(str(self.headers) + "\r\n")
             # Send Post data
             if(self.command=='POST'):
                 self.remote.send(self.rfile.read(int(self.headers['Content-Length'])))
@@ -373,16 +376,15 @@ class ProxyHandler(BaseHTTPRequestHandler):
             exc_type, exc_value, exc_traceback = sys.exc_info()
 
             if exc_type == socket.error:
-                code, msg = str(exc_value).split('] ')
-                code = code[1:].split(' ')[1]
-                logging.info (host + ": detected remote disconnect: " + code)
-                if code in ["32", "10053"]: #errno.EPIPE, 10053 is for Windows
+                code = exc_value[0]
+                if code in [32, 10053]: #errno.EPIPE, 10053 is for Windows
+                    logging.info ("Detected remote disconnect: " + host)
                     return
-                if code in ["54", "10054"]: #reset
+                if code in [54, 10054]: #reset
                     logging.info(host + ": reset from " + connectHost)
                     gConfig["BLOCKED_IPS"][connectHost] = True
                     return
-                if code in ["61"]: #server not support injection
+                if code in [61]: #server not support injection
                     if doInject:
                         logging.info("try not inject " + host)
                         domainWhiteList.append(host)
@@ -391,7 +393,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
             print "error in proxy: ", self.requestline
             print exc_type
             print str(exc_value) + " " + host
-            if exc_type == socket.timeout or (exc_type == socket.error and code in ["60", "110", "10060"]): #timed out, 10060 is for Windows
+            if exc_type == socket.timeout or (exc_type == socket.error and code in [60, 110, 10060]): #timed out, 10060 is for Windows
                 if not inWhileList:
                     logging.info ("add "+host+" to blocked domains")
                     gConfig["BLOCKED_IPS"][connectHost] = True
