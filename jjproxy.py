@@ -303,7 +303,10 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self.remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             logging.debug( host + ":connect to " + connectHost + ":" + str(port))
             self.remote.connect((connectHost, port))
-            
+
+            if doInject: 
+                logging.info ("inject http for "+host)
+                self.remote.send("\r\r\r\r\r\r\r\n\r\r\r\r\r")
 
             # Send requestline
             if path == "":
