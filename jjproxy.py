@@ -100,10 +100,6 @@ class ProxyHandler(BaseHTTPRequestHandler):
         if self.isIp(host):
             return host
 
-        if host in gConfig["HOST"]:
-            logging.info ("Rule resolve: " + host + " => " + gConfig["HOST"][host])
-            return gConfig["HOST"][host]
-
         self.now = int( time.time() )
         if host in self.dnsCache:
             if self.now < self.dnsCache[host]["expire"]:
@@ -268,11 +264,16 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 path = "/"
 
             if isDomainBlocked(host) or isIpBlocked(connectHost):
-                connectHost = gConfig['HTTP_PROXY']
-                port = gConfig['HTTP_PROXY_PORT']
-                path = self.path
+                if gConfig['PROXY_TYPE'] == 'socks5':
+                    self.remote = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
+                else:
+                    self.remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    connectHost = gConfig['HTTP_PROXY']
+                    port = gConfig['HTTP_PROXY_PORT']
+                    path = self.path
+            else:
+                self.remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-            self.remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             logging.debug( host + ":connect to " + connectHost + ":" + str(port))
             self.remote.connect((connectHost, port))
 
@@ -331,8 +332,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
                     gConfig["BLOCKED_IPS"][connectHost] = True
                     return
                      
-            print "error in proxy: ", self.requestline
-            print exc_type
+            print "error in proxy: ", self.requestline, exc_type
             print str(exc_value) + " " + host
             if exc_type == socket.timeout or (exc_type == socket.error and code in [60, 110, 10060]): #timed out, 10060 is for Windows
                 if not inWhileList:

@@ -3,11 +3,7 @@
 
 import random
 gConfig = {
-    "VERSION" : "20121022",
-    "AUTORANGE_BUFSIZE": 8192,
-    "AUTORANGE_WAITSIZE": 524288,
-    "AUTORANGE_MAXSIZE": 1048576,
-    "BLOCKED_DOMAINS_URI" : "https://raw.github.com/liruqi/west-chamber-season-3/master/west-chamber-proxy/status/timedout.txt",
+    "VERSION" : "20131126",
     "REMOTE_DNS_LIST" : ["8.8.8.8", "202.181.202.140", "202.181.224.2","168.95.192.1","168.95.1.1","203.119.1.1"],
     "DNS_PROTOCOL": "udp",
     "DNS_PORT": 53,
@@ -16,8 +12,7 @@ gConfig = {
     "CONFIG_ON_STARTUP" : False,
     "BLOCKED_DOMAINS_MATCH_ROOT" : False,
     "LOCAL_PORT" : 1987,
-    "HOST" : {},
-    "HTTP_PROXY": "61.30.127.2",
+    "PROXY_TYPE" : "socks5",
     "HSTS_DOMAINS" : {
         "developers.facebook.com": 1,
         "groups.google.com": 1,
