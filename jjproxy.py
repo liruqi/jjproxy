@@ -107,7 +107,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 return self.dnsCache[host]["ip"]
 
         if gConfig["SKIP_LOCAL_RESOLV"]:
-            return self.getRemoteResolve(host)
+            return self.getRemoteResolve(host, dnsHeap[0][1])
 
         try:
             ip = socket.gethostbyname(host)
@@ -123,16 +123,14 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 logging.debug ("DNS system resolve: " + host + " => " + ip)
                 if isIpBlocked(ip):
                     print (host + " => " + ip + " blocked, try remote resolve")
-                    return self.getRemoteResolve(host)
+                    return self.getRemoteResolve(host, dnsHeap[0][1])
                 return ip
         except:
             print "DNS system resolve Error: " + host
             ip = ""
-        return self.getRemoteResolve(host)
+        return self.getRemoteResolve(host, dnsHeap[0][1])
 
-    def getRemoteResolve(self, host):
-        dnsserver = dnsHeap[0][1] #heap top
-
+    def getRemoteResolve(self, host, dnsserver):
         logging.info ("remote resolve " + host + " by " + dnsserver)
         reqProtocol = "udp"
         if "DNS_PROTOCOL" in gConfig:
