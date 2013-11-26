@@ -12,16 +12,12 @@
 
 开发者
 ------
-* [XIAOXIA](http://xiaoxia.org), 代理原型作者
 * [LIRUQI](http://liruqi.info), 后续开发, 各平台的打包、发布
 
 代理原理
 --------
 
-1. 对抗关键词过滤: [rfc2616 - section 4.1](http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html)
-2. 对抗DNS污染: 修改PyDNS 库，实现丢弃GFW DNS 伪包。
-3. 对抗IP封锁: 收集被封锁的IP, 在DNS 解析过程中尝试找到可用IP。
-4. 如果没有可用IP，或者是HTTP注入导致异常，本代理会走HTTP代理。
+发现某些国外HTTP/HTTPS 代理可以用。
 
 捐赠
 ----

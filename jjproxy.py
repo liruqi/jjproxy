@@ -92,28 +92,6 @@ class ProxyHandler(BaseHTTPRequestHandler):
     now = 0
     depth = 0
 
-    def enableInjection(self, host, ip):
-        self.depth += 1
-        if self.depth > 3:
-            logging.error(host + " looping, exit")
-            return
-
-        global gipWhiteList;
-        
-        for c in ip:
-            if c!='.' and (c>'9' or c < '0'):
-                logging.error ("recursive ip "+ip)
-                return True
-
-        for r in gipWhiteList:
-            ran,m2 = r.split("/");
-            dip = struct.unpack('!I', socket.inet_aton(ip))[0]
-            dran = struct.unpack('!I', socket.inet_aton(ran))[0]
-            shift = 32 - int(m2)
-            if (dip>>shift) == (dran>>shift):
-                logging.info (ip + " (" + host + ") is in China, matched " + r)
-                return False
-        return True
 
     def isIp(self, host):
         return re.match(r'^([0-9]+\.){3}[0-9]+$', host) != None
@@ -217,7 +195,6 @@ class ProxyHandler(BaseHTTPRequestHandler):
         return host
     
     def proxy(self):
-        doInject = False
         inWhileList = False
         logging.info (self.requestline)
         port = 80
@@ -278,70 +255,41 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 self.wfile.write("Location: " + redirectUrl + "\r\n\r\n")
                 return
             
-            if (gConfig["ADSHOSTON"] and host in gConfig["ADSHOST"]):
-                status = "HTTP/1.1 404 Not Found"
-                self.wfile.write(status + "\r\n\r\n")
-                return
-
-            # Remove http://[host] , for google.com.hk
-            path = self.path[self.path.find(netloc) + len(netloc):]
-
             for d in domainWhiteList:
                 if host.endswith(d):
                     logging.info (host + " in domainWhiteList: " + d)
                     inWhileList = True
 
             connectHost = self.getip(host)
-            if not inWhileList:
-                doInject = self.enableInjection(host, connectHost)
-                logging.info ("Resolved " + host + " => " + connectHost)
+            
+            # Remove http://[host] , for google.com.hk
+            path = self.path[self.path.find(netloc) + len(netloc):]
+            if path == "":
+                path = "/"
 
             if isDomainBlocked(host) or isIpBlocked(connectHost):
                 connectHost = gConfig['HTTP_PROXY']
-                doInject = True
+                port = gConfig['HTTP_PROXY_PORT']
+                path = self.path
 
             self.remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             logging.debug( host + ":connect to " + connectHost + ":" + str(port))
             self.remote.connect((connectHost, port))
 
-            if doInject: 
-                logging.info ("inject http for "+host)
-                self.remote.send("\r\n\r\n")
-
-            # Send requestline
-            if path == "":
-                path = "/"
-            print " ".join((self.command, path, self.request_version)) + "\r\n"
-            self.remote.send(" ".join((self.command, path, self.request_version)) + "\r\n")
-            
-            if doInject: 
-                logging.info ("inject http for "+host)
-                del self.headers["Host"]
-                self.remote.send(str(self.headers) + "Host: " + host + "\r\n\r\n")
-            else:
-                self.remote.send(str(self.headers) + "\r\n")
+            print " ".join((self.command, self.path, self.request_version)) + "\r\n"
+            self.remote.send(" ".join((self.command, path, self.request_version)) + "\r\n" + str(self.headers) + "\r\n")
             # Send Post data
             if(self.command=='POST'):
                 self.remote.send(self.rfile.read(int(self.headers['Content-Length'])))
             response = HTTPResponse(self.remote, method=self.command)
             badStatusLine = False
-            msg = "http405"
             try :
                 response.begin()
                 print host + " response: %d"%(response.status)
-                msg = "http%d"%(response.status)
-            except BadStatusLine:
-                print host + " response: BadStatusLine"
-                msg = "badStatusLine"
-                badStatusLine = True
-            except:
-                raise
-
-            if doInject and (response.status == 400 or response.status == 405 or badStatusLine):
+            except: 
                 self.remote.close()
                 self.remote = None
-                logging.info (host + " seem not support inject, " + msg)
-                return 
+                raise
 
             # Reply to the browser
             status = "HTTP/1.1 " + str(response.status) + " " + response.reason
@@ -356,11 +304,6 @@ class ProxyHandler(BaseHTTPRequestHandler):
             while True:
                 response_data = response.read(8192)
                 if(len(response_data) == 0): break
-                if dataLength == 0 and (len(response_data) <= 501):
-                    if response_data.find("<title>400 Bad Request") != -1 or response_data.find("<title>501 Method Not Implemented") != -1:
-                        logging.error( host + " not supporting injection")
-                        domainWhiteList.append(host)
-                        response_data = gConfig["PAGE_RELOAD_HTML"]
                 self.wfile.write(response_data)
                 dataLength += len(response_data)
                 logging.debug( "data length: %d"%dataLength)
@@ -386,11 +329,6 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 if code in [54, 10054]: #reset
                     logging.info(host + ": reset from " + connectHost)
                     gConfig["BLOCKED_IPS"][connectHost] = True
-                    return
-                if code in [61]: #server not support injection
-                    if doInject:
-                        logging.info("try not inject " + host)
-                        domainWhiteList.append(host)
                     return
                      
             print "error in proxy: ", self.requestline
@@ -469,15 +407,17 @@ def start():
         heapq.heappush(dnsHeap, (1,d))
  
     try:
-        response = DNS.Request().req(name="jjproxy-http.liruqi.info", qtype="A", protocol="udp", port=gConfig["DNS_PORT"], server=gConfig["REMOTE_DNS_LIST"][0])
+        response = DNS.Request().req(name="jjproxy.liruqi.info", qtype="A", protocol="udp", port=gConfig["DNS_PORT"], server=gConfig["REMOTE_DNS_LIST"][0])
         for a in response.answers:
             if a['typename'] == 'A':
                 ip = a["data"]
                 gConfig["HTTP_PROXY"] = ip
+                gConfig["HTTP_PROXY_PORT"] = 25
                 print ("HTTP_PROXY: " + ip)
 
     except:
-        print "HTTP_PROXY resolve failed, use default: ", gConfig["HTTP_PROXY"]
+        print "HTTP_PROXY resolve failed, exit."
+        exit(1)
 
     print "Set your browser's HTTP/HTTPS proxy to 127.0.0.1:%d"%(gOptions.port)
     print "You can configure your proxy var http://127.0.0.1:%d"%(gOptions.port)
