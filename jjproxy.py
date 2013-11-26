@@ -403,7 +403,6 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
 def start():
 
-    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "106.186.23.182", 21)
     for d in gConfig["REMOTE_DNS_LIST"]:
         heapq.heappush(dnsHeap, (1,d))
  
@@ -414,7 +413,7 @@ def start():
                 ip = a["data"]
                 gConfig["HTTP_PROXY"] = ip
                 gConfig["HTTP_PROXY_PORT"] = 25
-                print ("JJPROXY: " + ip)
+                socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, ip, 21)
 
     except:
         print "HTTP_PROXY resolve failed, exit."
