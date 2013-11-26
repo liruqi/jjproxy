@@ -10,7 +10,7 @@
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from SocketServer import ThreadingMixIn
 from httplib import HTTPResponse, BadStatusLine
-import os, re, socket, struct, threading, traceback, sys, select, urlparse, signal, urllib, urllib2, time, hashlib, binascii, zlib, httplib, errno, string, logging, random, heapq
+import os, re, socket, struct, threading, traceback, sys, select, urlparse, signal, urllib, urllib2, time, hashlib, binascii, zlib, httplib, errno, string, logging, random, heapq, socks
 import DNS
 
 import config
@@ -353,16 +353,15 @@ class ProxyHandler(BaseHTTPRequestHandler):
         ip = self.getip(host)
         logging.info ("[Connect] Resolved " + host + " => " + ip)
         if  (isDomainBlocked(host) or isIpBlocked(ip)):
-            ip = gConfig['HTTP_PROXY']
+            self.remote = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
+        else:
+            self.remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        self.remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        logging.info ("SSL: connect " + host + " " + ip + ":" +port)
         try:
+            logging.info ("SSL: connect " + host + " " + ip + ":" +str(port))
             self.remote.connect((ip, int(port)))
-
-            Agent = 'WCProxy/1.0'
             self.wfile.write('HTTP/1.1'+' 200 Connection established\n'+
-                         'Proxy-agent: %s\n\n'%Agent)
+                         'Proxy-agent: JJProxy/1.0\n\n')
             self._read_write()
         except:
             logging.info ("SSL: connect " + ip + " failed.")
@@ -403,6 +402,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 break
 
 def start():
+
+    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "106.186.23.182", 21)
     for d in gConfig["REMOTE_DNS_LIST"]:
         heapq.heappush(dnsHeap, (1,d))
  
@@ -413,7 +414,7 @@ def start():
                 ip = a["data"]
                 gConfig["HTTP_PROXY"] = ip
                 gConfig["HTTP_PROXY_PORT"] = 25
-                print ("HTTP_PROXY: " + ip)
+                print ("JJPROXY: " + ip)
 
     except:
         print "HTTP_PROXY resolve failed, exit."
