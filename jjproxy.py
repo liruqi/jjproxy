@@ -306,6 +306,9 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 self.wfile.write(response_data)
                 dataLength += len(response_data)
                 logging.debug( "data length: %d"%dataLength)
+
+            self.remote.close()
+            self.remote = None
         except:
             if self.remote:
                 self.remote.close()
@@ -364,7 +367,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
         except:
             logging.info ("SSL: connect " + ip + " failed.")
             gConfig["BLOCKED_IPS"][ip] = True
-        return
+        self.remote.close()
+        self.remote = None
 
     def end_error(self, code, message=None, data=None):
         if not data:
