@@ -10,6 +10,8 @@
 2. Terminal: python jjproxy.py
 3. 把浏览器HTTP/HTTPS 代理设置为 127.0.0.1:1987
 
+另外，可以[支付](https://me.alipay.com/liruqi) 1 RMB, 使用[PAC](http://jjproxy.liruqi.info/http.pac)代理。每1 RMB可增加一个免Auth IP；另外任意金额获得代理服务器的用户名密码（不限IP使用）。
+
 开发者
 ------
 * [LIRUQI](http://liruqi.info), 后续开发, 各平台的打包、发布
@@ -19,6 +21,4 @@
 
 发现某些国外HTTP/HTTPS/SOCKS 代理可以用。
 
-捐赠
-----
-如果你喜欢这个软件，希望支持其后续开发，欢迎[捐赠](https://me.alipay.com/liruqi)。
+
