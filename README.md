@@ -8,7 +8,8 @@
 
 Ubuntu 上执行: 
 
-`apt-get install squid` 
+`apt-get install squid`
+
 `curl https://raw.githubusercontent.com/liruqi/jjproxy/master/squid.conf > /et/squid3/squid.conf`
 
 然后修改我 PAC 中的代理即可使用。
