@@ -1,5 +1,6 @@
 [jjproxy](http://liruqi.github.io/jjproxy/)
 =======
+GFW 封锁了 HTTP/Socks5 代理，HTTP 代理是关键词过滤，Socks5 代理则是封锁协议。不过某些特殊的低端口并没有这么处理，已知的有 20，21，25。
 
 搭建代理服务器
 ==============
