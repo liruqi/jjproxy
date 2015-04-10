@@ -16,7 +16,7 @@ Ubuntu:
 -------
 `apt-get install squid`
 
-`curl https://raw.githubusercontent.com/liruqi/jjproxy/master/squid.conf > /et/squid3/squid.conf`
+`curl https://raw.githubusercontent.com/liruqi/jjproxy/master/squid.conf > /etc/squid3/squid.conf`
 
 `/etc/init.d/squid restart`
 
